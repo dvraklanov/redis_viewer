@@ -1,8 +1,8 @@
-from pprint import pprint
 import json
 from flask import jsonify, request
-import redis.exceptions as rdE
+import redis.exceptions as rd
 from . import bp
+from .errors import *
 from .. import redis_ as rd
 from ..utils import *
 
@@ -22,6 +22,7 @@ def rget_branch():
     if branch != '':
         keys = [key.replace(branch, '', 1) for key in keys]
 
+    #Слишком много циклов for, долго работает
     for key in keys:
         prev_lvl = keys_split_list['keys']
         key_split = key.split(":")
