@@ -1,6 +1,5 @@
 import json
 from flask import jsonify, request
-import redis.exceptions as rd
 from . import bp
 from .errors import *
 from .. import redis_ as rd
@@ -8,7 +7,7 @@ from ..utils import *
 
 
 #Получить все ключи
-@bp.route('/rget_branch', methods=['GET'])
+@bp.route('/redis/get_branch', methods=['GET'])
 def rget_branch():
 
     check = check_params(['branch'], request)
@@ -45,7 +44,7 @@ def rget_branch():
 
 
 #Редактировать значение
-@bp.route('/rset', methods=['POST'])
+@bp.route('/redis/set', methods=['POST'])
 def rset_data():
 
     body = request.form #Получение тела запроса
@@ -96,7 +95,7 @@ def rset_data():
 
 
 #Получить значение
-@bp.route('/rget', methods=['GET'])
+@bp.route('/redis/get', methods=['GET'])
 def rget_data():
 
     check = check_params(['key'], request)
@@ -134,3 +133,21 @@ def rget_data():
         return error_response(400, f"Key '{key}' is not found.")
 
     return jsonify(response)
+
+#Сменить базу данных (db 0-15)
+@bp.route('/redis/select', methods=['POST'])
+def rselect():
+    body = request.form
+    if body:
+        db = body.get('db', False)
+        if not db: return error_response(400, '<<db>> is not found in request body.')
+        db = int(db)
+        if db in range(0, 16):
+            rd.execute_command( 'SELECT', db)
+            return jsonify(f"OK. Db is selected. Current db is {db}")
+        else:
+            return error_response(400, '<<db>> must be in range 0-15')
+
+    else:
+        print("Request body should not be empty")
+        return error_response(400, "Request body should not be empty")

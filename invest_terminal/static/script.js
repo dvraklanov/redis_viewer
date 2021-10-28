@@ -3,7 +3,7 @@ get_keys_branch();
 function get_keys_branch(branch = '') {
     //Запрос в API
     $.get({
-        url: "/api/rget_branch",
+        url: "/api/redis/get_branch",
         dataType: 'json',
         //КОСТЫЛЬ! Меняет тире на двоеточие при отправке, так как в jquery нельзя создавать объекты с ':'
         data : {branch : branch.replace(/-/g, ":")},
@@ -102,7 +102,7 @@ function get_value(key){
     $('.form-group').remove();
     //Запрос в API
     $.get({
-        url: "/api/rget",
+        url: "/api/redis/get",
 
         //КОСТЫЛЬ! Меняет двоеточие при запросе, так как в jquery нельзя создавать объекты с ':'
         data: {'key': key.replace(/-/g, ":")},
@@ -289,7 +289,7 @@ function save_value(){
     console.log(`set ${key}: ${value}`)
     //Записать новое значение в redis
     $.post({
-            url : '/api/rset',
+            url : '/api/redis/set',
             dataType: 'json',
             data : {'key' : key,
                     'value' : JSON.stringify(value)},
@@ -303,3 +303,18 @@ function save_value(){
             }
     })
 }
+
+$(".db-selector").change(function (){
+    $.post({
+            url : '/api/redis/select',
+            dataType: 'json',
+            data : {'db' : $(".db-selector").val()},
+            success : function (data){
+                console.log(data);
+                get_keys_branch();
+            },
+            error : function (xhr, textStatus, error) {
+                alert(xhr.responseJSON['message']);
+            }
+    })
+})

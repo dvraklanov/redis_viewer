@@ -3,8 +3,19 @@
 
     <div class="row">
 
-        <div class = "col-md-12 data-title">Data explorer</div>
-        <div class = "col-md-12 data-explore">
+        <div class = "col-md-12 data-title">
+            Data explorer
+            <div class="col-md-12 db-data">
+                IP: localhost:6379
+                <select class="form-select db-selector" aria-label="Default select example">
+                    <option selected value="0">0</option>
+                    {% for i in range(1, 16)%}
+                        <option value="{{ i }}">{{ i|e }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class = "col-md-12 data-explorer">
 
             <div class="col-md-5 key-tree panel panel-custom">
                 <div class="panel-heading key-tree-heading">Дерево ключей&nbsp

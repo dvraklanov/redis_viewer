@@ -11,7 +11,7 @@
     text-align: -webkit-center
 }
 
-.data-explore{
+.data-explorer{
     font-family: sans-serif;
     font-size: large;
     color: white;
@@ -102,7 +102,7 @@ details[open] > summary > span,
     width: min-content;
 }
 
-.update-period{
+.update-period, .db-selector{
     color: #444444;
 }
 
