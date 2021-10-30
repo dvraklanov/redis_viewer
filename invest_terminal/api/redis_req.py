@@ -9,8 +9,8 @@ from ..utils import *
 #Получить все ключи
 @bp.route('/redis/get_branch', methods=['GET'])
 def rget_branch():
-
-    check = check_params(['branch'], request)
+    logging.debug(request)
+    check = check_params(['branch'], request.args)
     if check is not None:
         return check
 
@@ -40,6 +40,7 @@ def rget_branch():
                             prev_lvl = prev_lvl[i][lvl]
                             break
 
+    logging.info(f'return parsed keys for branch {branch}')
     return jsonify(keys_split_list)
 
 
@@ -48,48 +49,52 @@ def rget_branch():
 def rset_data():
 
     body = request.form #Получение тела запроса
+    logging.debug(body)
+
     if body:
-        #Проверка на наличие всех параметров
-        key = body.get('key', False)
-        value = body.get('value', False)
-        if not key: return error_response(400, '<<key>> is not found in request body.')
-        if not value: return error_response(400, '<<value>> is not found in request body.')
+        # Проверка на наличие всех параметров
+        check = check_params(['key', 'value'], body)
+        if check is not None:
+            return check
 
-        else:
-            value = json.loads(value)
-            #Проверка существования ключа
-            if int(rd.exists(key)):
-                value_type = rd.type(key).decode('UTF-8')
+        key = body['key']
+        value = body['value']
+        logging.debug(f'{key=};{value=}')
+        value = json.loads(value)
+        #Проверка существования ключа
+        if int(rd.exists(key)):
+            value_type = rd.type(key).decode('UTF-8')
 
-                #Изменение значение в соотвествии с типом
-                if value_type == "string":
-                    rd.set(key, value=value)
+            #Изменение значение в соотвествии с типом
+            if value_type == "string":
+                rd.set(key, value=value)
 
-                else:
-                    rd.delete(key)
-                    if value_type == "list":
-                        rd.rpush(key, *value)
-
-                    elif value_type == "set":
-                        rd.sadd(key, *value)
-
-                    elif value_type == "hash":
-                        value = {key.strip(): val for key, val in value.items()}
-                        rd.hmset(key, value)
-
-                    elif value_type == 'zset':
-                        value = {val: key.strip() for key, val in value.items()}
-                        rd.zadd(key, value)
-
-                print(f'set {key}: {value}')
-                return jsonify("200. The value is set.")
-
-            #Ключ не найден
             else:
-                print(f"Key '{key}' is not found.")
-                return error_response(400, f"Key '{key}' is not found.")
+                rd.delete(key)
+                if value_type == "list":
+                    rd.rpush(key, *value)
+
+                elif value_type == "set":
+                    rd.sadd(key, *value)
+
+                elif value_type == "hash":
+                    value = {key.strip(): val for key, val in value.items()}
+                    rd.hmset(key, value)
+
+                elif value_type == 'zset':
+                    value = {val: key.strip() for key, val in value.items()}
+                    rd.zadd(key, value)
+
+            logging.debug(f'set {key}: {value}')
+            logging.info('The value is set.')
+            return jsonify("200. The value is set.")
+
+        #Ключ не найден
+        else:
+            logging.error(f"Key '{key}' is not found.")
+            return error_response(400, f"Key '{key}' is not found.")
     else:
-        print("Request body should not be empty")
+        logging.error("Request body should not be empty")
         return error_response(400, "Request body should not be empty")
 
 
@@ -98,11 +103,13 @@ def rset_data():
 @bp.route('/redis/get', methods=['GET'])
 def rget_data():
 
-    check = check_params(['key'], request)
+    logging.debug(request)
+    check = check_params(['key'], request.args)
     if check is not None:
         return check
 
     key = request.args.get('key', type=str)
+
     # Проверка существования ключа
     if int(rd.exists(key)):
 
@@ -121,15 +128,16 @@ def rget_data():
         elif value_type == 'zset':
             value = {val[1]: val[0].decode('UTF-8') for val in rd.zrange(key, 0, -1, withscores=True)}
         else:
-            print(f"Unknown data type: {value_type}")
+            logging.error(f"Unknown data type: {value_type}")
             return error_response(400, message=f"Unknown data type: {value_type}")
 
-        print(f'get {key}: {value}')
+        logging.debug(f'get {key}: {value}')
+        logging.info('The value is get')
         response = {'value_type': value_type, 'value': value}
 
     #Ключ не найден
     else:
-        print(f"Key '{key}' is not found.")
+        logging.error(f"Key '{key}' is not found.")
         return error_response(400, f"Key '{key}' is not found.")
 
     return jsonify(response)
@@ -138,16 +146,23 @@ def rget_data():
 @bp.route('/redis/select', methods=['POST'])
 def rselect():
     body = request.form
+    logging.debug(body)
     if body:
-        db = body.get('db', False)
-        if not db: return error_response(400, '<<db>> is not found in request body.')
-        db = int(db)
+        check = check_params(['db'], body)
+        if check is not None:
+            return check
+        # Проверка на наличие всех параметров
+        db = int(body['db'])
+
         if db in range(0, 16):
-            rd.execute_command( 'SELECT', db)
+            rd.execute_command('SELECT', db)
+            logging.info(f"Db is selected.")
+            logging.debug(f"Current db is {db}")
             return jsonify(f"OK. Db is selected. Current db is {db}")
         else:
-            return error_response(400, '<<db>> must be in range 0-15')
+            logging.error(f'<<db>> must be in range 0-15, current value is {db}')
+            return error_response(400, f'<<db>> must be in range 0-15, current value is {db}')
 
     else:
-        print("Request body should not be empty")
-        return error_response(400, "Request body should not be empty")
+        logging.error("Request body is empty")
+        return error_response(400, "Request body is empty")
