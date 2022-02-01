@@ -1,4 +1,7 @@
+import logging
+
 from flask import Flask
+
 
 def create_app(bootstrap, moment):
 
@@ -16,5 +19,6 @@ def create_app(bootstrap, moment):
     # Blueprint для главной страницы
     from .main import bp as main_bp
     app.register_blueprint(main_bp)
-
+    [print(key) for key in logging.Logger.manager.loggerDict]
+    logging.info('Starting app.')
     return app

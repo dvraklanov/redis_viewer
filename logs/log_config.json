@@ -1,0 +1,50 @@
+{
+  "logging": {
+    "version": 1,
+    "disable_existing_loggers": false,
+    "formatters": {
+      "simple": {
+        "format": "[%(asctime)s] <%(levelname)s::%(name)s> | (%(filename)s)::%(funcName)s::%(lineno)s -> %(message)s"
+      }
+    },
+    "handlers": {
+      "console": {
+        "class": "logging.StreamHandler",
+        "level": "INFO",
+        "formatter": "simple",
+        "stream": "ext://sys.stderr"
+      },
+      "debug_file_handler": {
+        "class": "logging.handlers.RotatingFileHandler",
+        "level": "DEBUG",
+        "formatter": "simple",
+        "filename": "logs/%s_invest_robot_debug.log",
+        "maxBytes": 1048576000,
+        "backupCount": 50,
+        "encoding": "utf8"
+      },
+      "info_file_handler": {
+        "class": "logging.handlers.RotatingFileHandler",
+        "level": "INFO",
+        "formatter": "simple",
+        "filename": "logs/%s_invest_robot_info.log",
+        "maxBytes": 1048576000,
+        "backupCount": 50,
+        "encoding": "utf8"
+      },
+      "error_file_handler": {
+        "class": "logging.handlers.RotatingFileHandler",
+        "level": "WARN",
+        "formatter": "simple",
+        "filename": "logs/%s_invest_robot_error.log",
+        "maxBytes": 1048576000,
+        "backupCount": 50,
+        "encoding": "utf8"
+      }
+    },
+    "root": {
+      "level": "DEBUG",
+      "handlers": ["console", "debug_file_handler", "info_file_handler", "error_file_handler"]
+    }
+  }
+}
