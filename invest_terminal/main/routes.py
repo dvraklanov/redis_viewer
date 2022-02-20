@@ -8,4 +8,4 @@ from .. import redis_
 @bp.route('/')
 @bp.route('/index')
 def index():
-    return render_template("index.html", username="Dosia")
+    return render_template("index.html")

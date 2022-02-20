@@ -3,14 +3,10 @@ import logging
 from flask import Flask
 
 
-def create_app(bootstrap, moment):
+def create_app():
 
     # Приложение Flask
     app = Flask(__name__)
-
-    # Подключение bootstrap, moment  к приложению
-    bootstrap.init_app(app)
-    moment.init_app(app)
 
     # Blueprint для api
     from .api import bp as api_bp

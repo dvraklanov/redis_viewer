@@ -1,19 +1,12 @@
-import logging
 import logging.config
 import json
 
 from . import terminal
 
 import redis
-from flask_bootstrap import Bootstrap
-from flask_moment import Moment
-
 
 with open("logs/log_config.json") as f:
     conf = json.load(f)
-
-bootstrap = Bootstrap()
-moment = Moment()
 
 logging.config.dictConfig(conf['logging'])
 
@@ -22,9 +15,10 @@ redis_ = redis.StrictRedis(
     host='localhost',
     port=6379,
     db=0,
-    password=None
+    password=None,
+    decode_responses=True
 )
 
 
-app = terminal.create_app(bootstrap=bootstrap, moment=moment)
+app = terminal.create_app()
 

@@ -10,14 +10,15 @@ from ..utils import *
 @bp.route('/redis/get_branch', methods=['GET'])
 def rget_branch():
     logging.debug(request)
-    check = check_params(['branch'], request.args)
-    if check is not None:
-        return check
-
-    branch = request.args.get('branch', type=str)
+    default_count = 10
+    cursor = request.args.get('curs', default=0, type=int)
+    match = request.args.get('match', type=str)
+    count = request.args.get('count', default=default_count, type=int)
+    rd.scan(cursor, match, count)
+    """branch = request.args.get('branch', type=str)
     keys_split_list = {'keys': []}
     branch = '' if branch == '' else branch + ":"
-    keys = [key.decode('UTF-8') for key in rd.keys(branch + '*')]
+    keys = [key for key in rd.keys(branch + '*')]
     if branch != '':
         keys = [key.replace(branch, '', 1) for key in keys]
 
@@ -38,10 +39,10 @@ def rget_branch():
                     if type(prev_lvl[i]) == dict:
                         if lvl in prev_lvl[i]:
                             prev_lvl = prev_lvl[i][lvl]
-                            break
+                            break"""
 
     logging.info(f'return parsed keys for branch {branch}')
-    return jsonify(keys_split_list)
+    return jsonify("")
 
 
 #Редактировать значение
@@ -63,7 +64,7 @@ def rset_data():
         value = json.loads(value)
         #Проверка существования ключа
         if int(rd.exists(key)):
-            value_type = rd.type(key).decode('UTF-8')
+            value_type = rd.type(key)
 
             #Изменение значение в соотвествии с типом
             if value_type == "string":
@@ -114,19 +115,19 @@ def rget_data():
     if int(rd.exists(key)):
 
         #Получение типа значения по ключу
-        value_type = rd.type(key).decode('UTF-8')
+        value_type = rd.type(key)
 
         #Возвращение значения в зависимости от типа
         if value_type == 'string':
-            value = rd.get(key).decode('UTF-8')
+            value = rd.get(key)
         elif value_type == 'list':
-            value = [val.decode('UTF-8') for val in rd.lrange(key, 0, -1)]
+            value = [val for val in rd.lrange(key, 0, -1)]
         elif value_type == 'hash':
-            value = {key.decode('UTF-8'): val.decode('UTF-8') for key, val in rd.hgetall(key).items()}
+            value = {key: val for key, val in rd.hgetall(key).items()}
         elif value_type == 'set':
-            value = [val.decode('UTF-8') for val in rd.smembers(key)]
+            value = [val for val in rd.smembers(key)]
         elif value_type == 'zset':
-            value = {val[1]: val[0].decode('UTF-8') for val in rd.zrange(key, 0, -1, withscores=True)}
+            value = {val[1]: val[0] for val in rd.zrange(key, 0, -1, withscores=True)}
         else:
             logging.error(f"Unknown data type: {value_type}")
             return error_response(400, message=f"Unknown data type: {value_type}")
