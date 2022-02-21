@@ -6,43 +6,31 @@ from .. import redis_ as rd
 from ..utils import *
 
 
-#Получить все ключи
+#Получить ветку
 @bp.route('/redis/get_branch', methods=['GET'])
 def rget_branch():
     logging.debug(request)
     default_count = 10
-    cursor = request.args.get('curs', default=0, type=int)
-    match = request.args.get('match', type=str)
+    cursor = request.args.get('cursor', default=0, type=int)
+    branch = request.args.get('branch', default="", type=str)
     count = request.args.get('count', default=default_count, type=int)
-    rd.scan(cursor, match, count)
-    """branch = request.args.get('branch', type=str)
-    keys_split_list = {'keys': []}
-    branch = '' if branch == '' else branch + ":"
-    keys = [key for key in rd.keys(branch + '*')]
-    if branch != '':
-        keys = [key.replace(branch, '', 1) for key in keys]
 
-    #Слишком много циклов for, долго работает
-    for key in keys:
-        prev_lvl = keys_split_list['keys']
-        key_split = key.split(":")
+    resp = rd.scan(cursor, f"{branch}*", count)
+    branch_dict = {"parent": branch, 'cursor': resp[0], 'branches': [], 'keys': []}
 
-        for lvl in key_split:
+    for key in resp[1]:
+        # Ключ разбивается по разделителю и исключается родительская ветка
+        split_key = key.split(":")[len(branch.split(":")) if branch != "" else 0:]
+        new_item = branch + (':' if branch != "" else "") + split_key[0]
 
-            if lvl == key_split[-1]:
-                prev_lvl.append(lvl)
-            else:
-                if not any(lvl in d.keys() for d in prev_lvl if type(d) == dict):
-                    prev_lvl += [{lvl: []}, lvl]
+        if len(split_key) == 1 and new_item not in branch_dict['keys']:
+            branch_dict['keys'].append(new_item)
 
-                for i in range(len(prev_lvl)-1):
-                    if type(prev_lvl[i]) == dict:
-                        if lvl in prev_lvl[i]:
-                            prev_lvl = prev_lvl[i][lvl]
-                            break"""
+        else:
+            if new_item not in branch_dict['branches']:
+                branch_dict['branches'].append(new_item)
 
-    logging.info(f'return parsed keys for branch {branch}')
-    return jsonify("")
+    return jsonify(branch_dict)
 
 
 #Редактировать значение
