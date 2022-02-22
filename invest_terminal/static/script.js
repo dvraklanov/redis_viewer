@@ -1,83 +1,104 @@
-get_keys_branch();
+const key_split = "-_-";
+
+$(document).ready(function() {
+    db_change();
+    get_branch();
+    //Авто обновление выбранной ветки с выбранным периодом
+    setTimeout(function update_brunch(){
+        if (+$('.update-period').val()){
+            let branch = $('.update-check:checked').attr('id');
+            if (branch !== undefined){
+                get_branch(branch);
+            }
+        }
+        setTimeout(update_brunch, +$('.update-period').val() * 1000);
+        }, +$('.update-period').val() * 1000);
+
+    // Изменить базу данных в redis (0-15)
+    $(".db-selector").change(function (){db_change()})
+});
+
 //Получение ключей в заданной ветке (по стандарту - все дерево)
-function get_keys_branch(branch = '') {
+function get_branch(branch = '', cursor = 0, count = null) {
     //Запрос в API
     $.get({
         url: "/api/redis/get_branch",
         dataType: 'json',
-        //КОСТЫЛЬ! Меняет тире на двоеточие при отправке, так как в jquery нельзя создавать объекты с ':'
-        data : {branch : branch.replace(/-/g, ":")},
+        data : {cursor: cursor,
+                // Костыль! Двоеточие меняется на другой разделитель
+                branch : branch.replace(new RegExp(key_split, 'g'), ":"),
+                count: count},
         success: function (data) {
-            if (branch !== ''){
-                $('#' + branch + '.branch').children().not(':first-child').remove();
-            }
-            else {
-                $('.key-tree-body').html('')
-            }
-            console.log('Key tree start: ...\n')
-            parse_keys(data['keys'], branch)
-            console.log('\nKey tree end.')
+
+            console.log(data);
+            parse_branch(data);
+            if (data['cursor'] !== 0) get_branch(branch, data['cursor']);
         }
     })
 }
 
 //Парсинг списка ключей и вывод взависимости от типа данных
-function parse_keys(keys = [], branch = '.key-tree-body'){
-    console.log('\nbr: ', branch);
+function parse_branch(branch = {}){
     //Составление дерева ключей
-    keys.forEach(function (key, i){
-        //Добавление новой ветки
-        if (typeof(key) == 'object'){
-            let new_branch_name = (branch === '' ? '' : branch + '-') + keys[i + 1]
-            console.log('new_branch: ',new_branch_name)
-            let new_branch = $('<details>', {
-                class : 'branch',
-                id : new_branch_name,
-                html : `<summary><span>${keys[i + 1]}</span>&nbsp<input class="update-check"
-                        type="checkbox" id="${new_branch_name}">
-                        <button onclick="get_keys_branch('${new_branch_name}')" type="submit" class="btn btn-success btn-md btn-update btn-xs">
-                        <i style="font-size: 10px" class="glyphicon glyphicon-refresh"></i></button>
-                        </summary>`
+    let parent;
+    if (branch['parent'] === "") parent = "main-branch"
+    else parent = branch['parent']
 
-            })
-            if (branch === '') {
-                $('.key-tree-body').append(new_branch);
-            }
-            else {
-                $('#' + branch + '.branch').append(new_branch);
-            }
+    branch['branches'].forEach(function (item){
 
-            parse_keys(key[keys[i + 1]], new_branch_name);
+        // Костыль! Двоеточие меняется на другой разделитель
+        let item_r = item.replace(/:/g, key_split);
+        // Добавить новую ветку, если не существует
+        if (!$(`#${item_r}.branch`).length){
+            let new_branch_name = item_r.split(key_split);
+            new_branch_name = new_branch_name[new_branch_name.length-1];
+            console.log('new_branch: ',new_branch_name);
+            let new_branch = document.createElement('details');
+            new_branch.id = item_r;
+            new_branch.className = 'branch';
+            // Костыль! Двоеточие меняется на другой разделитель
+            new_branch.innerHTML = `<summary onclick="add_loaded(this, '${item}')">
+                                    <span>${new_branch_name}</span>&nbsp<input class="update-check"
+                                    type="checkbox">
+                                    <button onclick="get_branch('${item_r}')" type="submit"
+                                    class="btn btn-success btn-md btn-update btn-xs">
+                                    <i style="font-size: 10px" class="glyphicon glyphicon-refresh"></i></button>
+                                    </summary>`
 
-        //Добавление нового ключа
-        }else if (typeof keys[i - 1] != 'object') {
-            let prev_id = (branch === '' ? '' : branch + '-')
-            let new_key = $('<p>',{
-                class : 'key',
-                id : prev_id + key,
-                text : key
-            });
-            console.log('new_key: ', new_key)
-            if (branch === '') {
-                $('.key-tree-body').append(new_key);
-            }
-            else {
-                $('#' + branch + '.branch').append(new_key);
-            }
-
-            //Добавление функции получения значения по ключу после клика
-            $(`#${prev_id}${key}.key`).click(function () {
-                $('.key').each(function() {
-                    $(this).removeClass('choice');
-                });
-                $(".btn-save").prop('disabled', true);
-                $(this).addClass("choice");
-                get_value($(this).attr('id'))
-            })
+            // Костыль! Двоеточие меняется на другой разделитель
+            document.querySelector('#' + parent.replace(/:/g, key_split) + '.branch').appendChild(new_branch);
         }
     })
+    branch['keys'].forEach(function (item){
 
-    //Выбор обновляемой ветки
+        // Костыль! Двоеточие меняется на другой разделитель
+        let item_r = item.replace(/:/g, key_split);
+        if (!$(`#${item_r}.key`).length){
+
+            let new_key_name = item_r.split(key_split);
+            new_key_name = new_key_name[new_key_name.length-1];
+            console.log('new_key: ', new_key_name);
+
+            let new_key = document.createElement('p');
+            new_key.id = item;
+            new_key.className = 'key';
+            new_key.innerText = new_key_name;
+
+            // Костыль! Двоеточие меняется на другой разделитель
+            document.querySelector('#' + parent.replace(/:/g, key_split) + '.branch').appendChild(new_key)
+
+            $(`#${item}.key`).click(function () {
+                    $('.key').each(function() {
+                        $(this).removeClass('choice');
+                    });
+                    $(".btn-save").prop('disabled', true);
+                    $(this).addClass("choice");
+                    get_value($(this).attr('id'))
+            })
+        }
+
+    })
+        //Выбор обновляемой ветки
     $('.update-check').click(function(){
         if ($(this).is(':checked')) {
              $('.update-check').not(this).prop('checked', false);
@@ -85,16 +106,13 @@ function parse_keys(keys = [], branch = '.key-tree-body'){
     });
 }
 
-//Авто обновление выбранной ветки с выбранным периодом
-setTimeout(function update_brunch(){
-    if (+$('.update-period').val()){
-        let branch = $('.update-check:checked').attr('id');
-        if (branch != undefined){
-            get_keys_branch(branch);
-        }
+//Прогрузка ветки по нажатию
+function add_loaded(e, item){
+    if (!$(e).parents().first().hasClass('loaded')){
+        get_branch(item);
+        $(e).parents().first().addClass('loaded');
     }
-    setTimeout(update_brunch, +$('.update-period').val() * 1000);
-}, +$('.update-period').val() * 1000);
+}
 
 //Получить и вывести значение по ключю
 function get_value(key){
@@ -103,17 +121,16 @@ function get_value(key){
     //Запрос в API
     $.get({
         url: "/api/redis/get",
-
-        //КОСТЫЛЬ! Меняет двоеточие при запросе, так как в jquery нельзя создавать объекты с ':'
-        data: {'key': key.replace(/-/g, ":")},
+        // Костыль! Двоеточие меняется на другой разделитель
+        data: {'key': key.replace(new RegExp(key_split, 'g'), ":")},
         success : function (data){
             console.log(`get ${key}: ${JSON.stringify(data)}`);
             let value_type = data['value_type'];
             let value = data['value']
 
-            //КОСТЫЛЬ! Меняет двоеточие при запросе, так как в jquery нельзя создавать объекты с ':'
             //Строка состояние (текущий ключ и его тип)
-            $('.key-name').text(key.replace(/-/g, ":"));
+            // Костыль! Двоеточие меняется на другой разделитель
+            $('.key-name').text(key.replace(new RegExp(key_split, 'g'),  ":"));
             $('.value-type').text(value_type);
             $('.value-heading').append(edit_form());
             //Вывод значения в зависимости от типа
@@ -150,7 +167,7 @@ function get_value(key){
                 )
             }
         },
-        error : function (xhr, textStatus, error){
+        error : function (xhr){
             alert(xhr.responseJSON['message'])
         }
     })
@@ -186,7 +203,7 @@ function edit_value(){
 
 //Строка таблицы
 function table_row(index, value){
-    let row = $('<tr>', {
+    return $('<tr>', {
         class: "table-item",
         html: `<th class="item-index">
                     <button onclick="change_to_remove(this)" type="submit" class="btn btn-danger btn-md btn-remove btn-xs">
@@ -196,7 +213,6 @@ function table_row(index, value){
                 </th>
                <th class="item-value">${value}</th>`
     })
-    return row
 }
 
 //Кнопка изменения значения
@@ -217,7 +233,6 @@ function edit_form(){
                 placeholder : "Новый ключ"
             }))
         }
-
     }
     form.append($('<input>', {
         class : "form-control new-value-input",
@@ -291,30 +306,33 @@ function save_value(){
     $.post({
             url : '/api/redis/set',
             dataType: 'json',
-            data : {'key' : key,
+            // Костыль! Двоеточие меняется на другой разделитель
+            data : {'key' : key.replace(new RegExp(key_split, 'g'), ":"),
                     'value' : JSON.stringify(value)},
             success : function (data){
                 $(".btn-save").prop('disabled', true);
                 console.log(data);
                 get_value(key);
             },
-            error : function (xhr, textStatus, error) {
+            error : function (xhr) {
                 alert(xhr.responseJSON['message'])
             }
     })
 }
 
-$(".db-selector").change(function (){
+function db_change(){
     $.post({
             url : '/api/redis/select',
             dataType: 'json',
             data : {'db' : $(".db-selector").val()},
             success : function (data){
                 console.log(data);
-                get_keys_branch();
+                $('#main-branch.branch').html('');
+                get_branch();
             },
-            error : function (xhr, textStatus, error) {
+            error : function (xhr) {
                 alert(xhr.responseJSON['message']);
             }
     })
-})
+}
+

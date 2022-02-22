@@ -6,18 +6,18 @@ from .. import redis_ as rd
 from ..utils import *
 
 
-#Получить ветку
-@bp.route('/redis/get_branch', methods=['GET'])
+# Получить ветку
+@bp.get('/redis/get_branch')
 def rget_branch():
     logging.debug(request)
     default_count = 10
     cursor = request.args.get('cursor', default=0, type=int)
     branch = request.args.get('branch', default="", type=str)
-    count = request.args.get('count', default=default_count, type=int)
-
-    resp = rd.scan(cursor, f"{branch}*", count)
+    count = request.args.get('count', type=int)
+    logging.info(request.args)
+    resp = rd.scan(cursor, f"{branch + ':' if branch != '' else branch}*", count)
     branch_dict = {"parent": branch, 'cursor': resp[0], 'branches': [], 'keys': []}
-
+    logging.info(resp[1])
     for key in resp[1]:
         # Ключ разбивается по разделителю и исключается родительская ветка
         split_key = key.split(":")[len(branch.split(":")) if branch != "" else 0:]
@@ -33,11 +33,10 @@ def rget_branch():
     return jsonify(branch_dict)
 
 
-#Редактировать значение
-@bp.route('/redis/set', methods=['POST'])
+# Редактировать значение
+@bp.post('/redis/set')
 def rset_data():
-
-    body = request.form #Получение тела запроса
+    body = request.form  # Получение тела запроса
     logging.debug(body)
 
     if body:
@@ -50,11 +49,11 @@ def rset_data():
         value = body['value']
         logging.debug(f'{key=};{value=}')
         value = json.loads(value)
-        #Проверка существования ключа
+        # Проверка существования ключа
         if int(rd.exists(key)):
             value_type = rd.type(key)
 
-            #Изменение значение в соотвествии с типом
+            # Изменение значение в соотвествии с типом
             if value_type == "string":
                 rd.set(key, value=value)
 
@@ -78,7 +77,7 @@ def rset_data():
             logging.info('The value is set.')
             return jsonify("200. The value is set.")
 
-        #Ключ не найден
+        # Ключ не найден
         else:
             logging.error(f"Key '{key}' is not found.")
             return error_response(400, f"Key '{key}' is not found.")
@@ -87,11 +86,9 @@ def rset_data():
         return error_response(400, "Request body should not be empty")
 
 
-
-#Получить значение
-@bp.route('/redis/get', methods=['GET'])
+# Получить значение
+@bp.get('/redis/get')
 def rget_data():
-
     logging.debug(request)
     check = check_params(['key'], request.args)
     if check is not None:
@@ -102,10 +99,10 @@ def rget_data():
     # Проверка существования ключа
     if int(rd.exists(key)):
 
-        #Получение типа значения по ключу
+        # Получение типа значения по ключу
         value_type = rd.type(key)
 
-        #Возвращение значения в зависимости от типа
+        # Возвращение значения в зависимости от типа
         if value_type == 'string':
             value = rd.get(key)
         elif value_type == 'list':
@@ -124,27 +121,25 @@ def rget_data():
         logging.info('The value is get')
         response = {'value_type': value_type, 'value': value}
 
-    #Ключ не найден
+    # Ключ не найден
     else:
         logging.error(f"Key '{key}' is not found.")
         return error_response(400, f"Key '{key}' is not found.")
 
     return jsonify(response)
 
-#Сменить базу данных (db 0-15)
-@bp.route('/redis/select', methods=['POST'])
-def rselect():
+
+# Сменить базу данных (db 0-15)
+@bp.post('/redis/select')
+def rselect_db():
     body = request.form
     logging.debug(body)
     if body:
-        check = check_params(['db'], body)
-        if check is not None:
-            return check
         # Проверка на наличие всех параметров
-        db = int(body['db'])
+        db = int(body.get('db', 0))
 
         if db in range(0, 16):
-            rd.execute_command('SELECT', db)
+            rd.select(db)
             logging.info(f"Db is selected.")
             logging.debug(f"Current db is {db}")
             return jsonify(f"OK. Db is selected. Current db is {db}")
