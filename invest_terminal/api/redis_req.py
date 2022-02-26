@@ -10,18 +10,18 @@ from ..utils import *
 @bp.get('/redis/get_branch')
 def rget_branch():
     logging.debug(request)
-    default_count = 10
+    key_split = ':'
     cursor = request.args.get('cursor', default=0, type=int)
     branch = request.args.get('branch', default="", type=str)
     count = request.args.get('count', type=int)
     logging.info(request.args)
-    resp = rd.scan(cursor, f"{branch + ':' if branch != '' else branch}*", count)
+    resp = rd.scan(cursor, f"{branch + key_split if branch != '' else branch}*", count)
     branch_dict = {"parent": branch, 'cursor': resp[0], 'branches': [], 'keys': []}
     logging.info(resp[1])
     for key in resp[1]:
         # Ключ разбивается по разделителю и исключается родительская ветка
-        split_key = key.split(":")[len(branch.split(":")) if branch != "" else 0:]
-        new_item = branch + (':' if branch != "" else "") + split_key[0]
+        split_key = key.split(key_split)[len(branch.split(key_split)) if branch != "" else 0:]
+        new_item = branch + (key_split if branch != "" else "") + split_key[0]
 
         if len(split_key) == 1 and new_item not in branch_dict['keys']:
             branch_dict['keys'].append(new_item)

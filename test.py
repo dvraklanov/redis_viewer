@@ -8,11 +8,10 @@ redis_ = redis.StrictRedis(
     password=None,
     decode_responses=True
 )
-print(redis_.select(2))
-print(redis_.keys('*'))
 
-"""for i in range(1000):
 
-    redis_.set(str(int(time.time())), i)
-    time.sleep(0.2)"""
+for i in range(1000):
+
+    redis_.set("fold:" + str(int(time.time())), i)
+    time.sleep(0.2)
 

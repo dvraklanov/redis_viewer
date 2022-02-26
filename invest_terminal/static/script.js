@@ -1,4 +1,5 @@
-const key_split = "-_-";
+const key_split = ":"
+const new_key_split = "-_-";
 
 $(document).ready(function() {
     db_change();
@@ -19,14 +20,14 @@ $(document).ready(function() {
 });
 
 //Получение ключей в заданной ветке (по стандарту - все дерево)
-function get_branch(branch = '', cursor = 0, count = null) {
+function get_branch(branch = '', cursor = 0, count = 100) {
     //Запрос в API
     $.get({
         url: "/api/redis/get_branch",
         dataType: 'json',
         data : {cursor: cursor,
                 // Костыль! Двоеточие меняется на другой разделитель
-                branch : branch.replace(new RegExp(key_split, 'g'), ":"),
+                branch : branch.replace(new RegExp(new_key_split, 'g'), key_split),
                 count: count},
         success: function (data) {
 
@@ -47,53 +48,53 @@ function parse_branch(branch = {}){
     branch['branches'].forEach(function (item){
 
         // Костыль! Двоеточие меняется на другой разделитель
-        let item_r = item.replace(/:/g, key_split);
+        let item_r = item.replace(new RegExp(key_split, 'g'), new_key_split);
         // Добавить новую ветку, если не существует
         if (!$(`#${item_r}.branch`).length){
-            let new_branch_name = item_r.split(key_split);
+            let new_branch_name = item_r.split(new_key_split);
             new_branch_name = new_branch_name[new_branch_name.length-1];
             console.log('new_branch: ',new_branch_name);
             let new_branch = document.createElement('details');
             new_branch.id = item_r;
             new_branch.className = 'branch';
             // Костыль! Двоеточие меняется на другой разделитель
-            new_branch.innerHTML = `<summary onclick="add_loaded(this, '${item}')">
+            new_branch.innerHTML = `<summary onclick="add_loaded(this, '${item_r}')">
                                     <span>${new_branch_name}</span>&nbsp<input class="update-check"
-                                    type="checkbox">
+                                    type="checkbox" id = '${item_r}'>
                                     <button onclick="get_branch('${item_r}')" type="submit"
                                     class="btn btn-success btn-md btn-update btn-xs">
                                     <i style="font-size: 10px" class="glyphicon glyphicon-refresh"></i></button>
                                     </summary>`
 
             // Костыль! Двоеточие меняется на другой разделитель
-            document.querySelector('#' + parent.replace(/:/g, key_split) + '.branch').appendChild(new_branch);
+            document.querySelector('#' + parent.replace(new RegExp(key_split, 'g'), new_key_split) + '.branch').appendChild(new_branch);
         }
     })
     branch['keys'].forEach(function (item){
 
         // Костыль! Двоеточие меняется на другой разделитель
-        let item_r = item.replace(/:/g, key_split);
+        let item_r = item.replace(new RegExp(key_split, 'g'), new_key_split);
         if (!$(`#${item_r}.key`).length){
 
-            let new_key_name = item_r.split(key_split);
+            let new_key_name = item_r.split(new_key_split);
             new_key_name = new_key_name[new_key_name.length-1];
             console.log('new_key: ', new_key_name);
 
             let new_key = document.createElement('p');
-            new_key.id = item;
+            new_key.id = item_r;
             new_key.className = 'key';
             new_key.innerText = new_key_name;
 
             // Костыль! Двоеточие меняется на другой разделитель
-            document.querySelector('#' + parent.replace(/:/g, key_split) + '.branch').appendChild(new_key)
+            document.querySelector('#' + parent.replace(new RegExp(key_split, 'g'), new_key_split) + '.branch').appendChild(new_key)
 
-            $(`#${item}.key`).click(function () {
-                    $('.key').each(function() {
-                        $(this).removeClass('choice');
-                    });
-                    $(".btn-save").prop('disabled', true);
-                    $(this).addClass("choice");
-                    get_value($(this).attr('id'))
+            $(`#${item_r}.key`).click(function () {
+                $('.key').each(function() {
+                    $(this).removeClass('choice');
+                });
+                $(".btn-save").prop('disabled', true);
+                $(this).addClass("choice");
+                get_value($(this).attr('id'))
             })
         }
 
@@ -122,7 +123,7 @@ function get_value(key){
     $.get({
         url: "/api/redis/get",
         // Костыль! Двоеточие меняется на другой разделитель
-        data: {'key': key.replace(new RegExp(key_split, 'g'), ":")},
+        data: {'key': key.replace(new RegExp(new_key_split, 'g'), key_split)},
         success : function (data){
             console.log(`get ${key}: ${JSON.stringify(data)}`);
             let value_type = data['value_type'];
@@ -130,7 +131,7 @@ function get_value(key){
 
             //Строка состояние (текущий ключ и его тип)
             // Костыль! Двоеточие меняется на другой разделитель
-            $('.key-name').text(key.replace(new RegExp(key_split, 'g'),  ":"));
+            $('.key-name').text(key.replace(new RegExp(new_key_split, 'g'),  key_split));
             $('.value-type').text(value_type);
             $('.value-heading').append(edit_form());
             //Вывод значения в зависимости от типа
@@ -307,7 +308,7 @@ function save_value(){
             url : '/api/redis/set',
             dataType: 'json',
             // Костыль! Двоеточие меняется на другой разделитель
-            data : {'key' : key.replace(new RegExp(key_split, 'g'), ":"),
+            data : {'key' : key.replace(new RegExp(new_key_split, 'g'), key_split),
                     'value' : JSON.stringify(value)},
             success : function (data){
                 $(".btn-save").prop('disabled', true);
