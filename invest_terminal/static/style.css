@@ -116,8 +116,8 @@ details[open] > summary > span,
 
 .value-table{
     color: white;
-    background-color: #3d3d3d;
-    border: solid 3px #333333;
+    background-color: #333333;
+    border: solid 3px #3d3d3d;
     border-radius: 5px;
 }
 

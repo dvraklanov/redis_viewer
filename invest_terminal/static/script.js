@@ -146,7 +146,7 @@ function get_value(key){
                 $('.value-body').append(function (){
                     //Составление таблицы из массива
                     let table = $('<table>',{
-                        class : "table table-striped value-table",
+                        class : "table value-table",
                         cellspacing : "0",
                         html :`<thead class="thead">
                                     <tr><th width="25%" scope="col">#</th><th scope="col">Значение</th></tr>
