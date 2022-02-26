@@ -17,7 +17,6 @@
     color: white;
     line-height: 1.5;
     letter-spacing: 1px;
-    margin-top: 2rem;
 }
 
 details {
@@ -68,6 +67,15 @@ details[open] > summary > span,
     text-decoration: underline;
 }
 
+.key-tree-heading,.value-heading{
+    margin-top: 8px;
+    margin-bottom: 8px;
+    padding: 5px;
+    border: solid 3px #3d3d3d;
+    border-radius: 5px;
+    background-color: #333333;
+}
+
 .panel-custom.key-tree,
 .panel-custom.key-data{
     background-color: dimgray;
@@ -88,6 +96,15 @@ details[open] > summary > span,
     width: 100%;
 }
 
+.value-edit-form{
+    margin-top: 6px;
+    margin-bottom: 6px;
+}
+
+.new-value-input{
+    margin-bottom: 3px;
+}
+
 .value-type-block{
     display: flex;
     width: 100%;
@@ -95,6 +112,17 @@ details[open] > summary > span,
 
 .value-string{
     word-wrap: break-word;
+}
+
+.value-table{
+    color: white;
+    background-color: #3d3d3d;
+    border: solid 3px #333333;
+    border-radius: 5px;
+}
+
+table{
+    color: white;
 }
 
 .row-index{

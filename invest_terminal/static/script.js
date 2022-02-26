@@ -62,8 +62,8 @@ function parse_branch(branch = {}){
                                     <span>${new_branch_name}</span>&nbsp<input class="update-check"
                                     type="checkbox" id = '${item_r}'>
                                     <button onclick="get_branch('${item_r}')" type="submit"
-                                    class="btn btn-success btn-md btn-update btn-xs">
-                                    <i style="font-size: 10px" class="glyphicon glyphicon-refresh"></i></button>
+                                    class="btn btn-success btn-sm btn-update">
+                                    <i class="bi bi-arrow-clockwise"></i></button>
                                     </summary>`
 
             // Костыль! Двоеточие меняется на другой разделитель
@@ -146,9 +146,9 @@ function get_value(key){
                 $('.value-body').append(function (){
                     //Составление таблицы из массива
                     let table = $('<table>',{
-                        class : "table table-dark table-bordered value-table",
+                        class : "table table-striped value-table",
                         cellspacing : "0",
-                        html :`<thead class="thead-dark">
+                        html :`<thead class="thead">
                                     <tr><th width="25%" scope="col">#</th><th scope="col">Значение</th></tr>
                                </thead>`,
                     });
@@ -208,7 +208,7 @@ function table_row(index, value){
         class: "table-item",
         html: `<th class="item-index">
                     <button onclick="change_to_remove(this)" type="submit" class="btn btn-danger btn-md btn-remove btn-xs">
-                        <i style="font-size: 10px" class="glyphicon glyphicon-remove"></i>
+                        <i class="bi bi-eraser"></i>
                     </button>&nbsp
                     ${index}
                 </th>
@@ -220,7 +220,7 @@ function table_row(index, value){
 function edit_form(){
     let btn_value;
     let form = $('<div>',{
-        class : "form-group"
+        class : "form-group value-edit-form"
     })
     let value_type = $('.value-type').text();
 
@@ -241,15 +241,15 @@ function edit_form(){
         placeholder: "Новое значение",
         }))
     form.append($('<button>',{
-            class : "btn btn-success mb-2",
+            class : "btn btn-success",
             type : "submit",
             text : btn_value,
             onclick : "edit_value()"
     }))
     form.append($('<button>',{
-            class : "btn btn-success btn-md btn-update btn-md",
+            class : "btn btn-success btn-update",
             type : "submit",
-            html : '<i style="font-size: 10px" class="glyphicon glyphicon-refresh"></i>',
+            html : '<i class="bi bi-arrow-clockwise"></i>',
             onclick : `get_value("${$('.key-name').text()}")`
     }))
     return form;

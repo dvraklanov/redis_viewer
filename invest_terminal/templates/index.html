@@ -2,10 +2,9 @@
 {% block content %}
 
     <div class="row">
-
         <div class = "col-md-12 data-title">
             Data explorer
-            <div class="col-md-12 db-data">
+            <div class="col-md-1 align-self-center db-data">
                 <select class="form-select db-selector" aria-label="Default select example">
                     <option selected value="0">0</option>
                     {% for i in range(1, 16)%}
@@ -15,42 +14,49 @@
             </div>
         </div>
         <div class = "col-md-12 data-explorer">
-
-            <div class="col-md-5 key-tree panel panel-custom">
-                <div class="panel-heading key-tree-heading">Дерево ключей
-                    <div class="update-form">
-                        Период обновления:&nbsp
-                        <select class="form-select update-period" aria-label="Default select example">
-                            <option selected value="0">Нет</option>
-                            <option value="1">1 сек.</option>
-                            <option value="5">5 сек.</option>
-                            <option value="15">15 сек.</option>
-                            <option value="30">30 сек.</option>
-                            <option value="60">60 сек.</option>
-                        </select>
-                        <button onclick="get_branch()" type="submit" class="btn btn-success btn-md btn-update">Обновить <i class="glyphicon glyphicon-refresh"></i></button>
-                        <input class="update-check" type="checkbox" id="">
+            <div class="row">
+                <div class="col-md-5 key-tree panel panel-custom">
+                    <div class="panel-heading key-tree-heading">Дерево ключей
+                        <div class="update-form">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    Период обновления:
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select update-period" aria-label="Default select example">
+                                        <option selected value="0">Нет</option>
+                                        <option value="1">1 сек.</option>
+                                        <option value="5">5 сек.</option>
+                                        <option value="15">15 сек.</option>
+                                        <option value="30">30 сек.</option>
+                                        <option value="60">60 сек.</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <input class="update-check" type="checkbox" id="">
+                                    <button onclick="get_branch()" type="submit" class="btn btn-success btn-md btn-update">
+                                        Обновить <i class="bi bi-arrow-clockwise"></i></button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    </div>
-                <div class="panel-body branch" id = "main-branch">
-
+                    <div class="panel-body branch" id = "main-branch"></div>
                 </div>
-            </div>
-
-            <div class="col-md-7 key-data panel panel-custom">
-                <div class="panel-heading value-heading">Данные
-                    <input onclick="save_value()" disabled="true" type="button" value="Сохранить" class="btn btn-success btn-md btn-save">
-                    <div class="key-block">
-                        <div class="key-heading">Ключ:&nbsp</div>
-                        <div class="key-name"></div>
+                <div class="col-md-7 key-data panel panel-custom">
+                    <div class="panel-heading value-heading">Данные
+                        <input onclick="save_value()" disabled="true" type="button" value="Сохранить" class="btn btn-success btn-md btn-save">
+                        <div class="key-block">
+                            <div class="key-heading">Ключ:&nbsp</div>
+                            <div class="key-name"></div>
+                        </div>
+                        <div class="value-type-block">
+                            <div class="value-type-heading">Тип данных:&nbsp</div>
+                            <div class="value-type"></div>
+                        </div>
                     </div>
-                    <div class="value-type-block">
-                        <div class="value-type-heading">Тип данных:&nbsp</div>
-                        <div class="value-type"></div>
-                    </div>
-                </div>
-                <div class="panel-body value-body">
+                    <div class="panel-body value-body">
 
+                    </div>
                 </div>
             </div>
         </div>
