@@ -10,8 +10,8 @@ redis_ = redis.StrictRedis(
 )
 
 
-for i in range(1000):
+for i in range(10):
 
-    redis_.set("fold:" + str(int(time.time())), i)
+    redis_.set("fold:" + str(int(time.time()*1000)), i)
     time.sleep(0.2)
 

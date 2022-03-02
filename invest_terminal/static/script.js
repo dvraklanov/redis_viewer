@@ -31,7 +31,7 @@ function get_branch(branch = '', cursor = 0, count = 100) {
                 count: count},
         success: function (data) {
 
-            console.log(data);
+            //console.log(data);
             parse_branch(data);
             if (data['cursor'] !== 0) get_branch(branch, data['cursor']);
         }
@@ -53,17 +53,36 @@ function parse_branch(branch = {}){
         if (!$(`#${item_r}.branch`).length){
             let new_branch_name = item_r.split(new_key_split);
             new_branch_name = new_branch_name[new_branch_name.length-1];
-            console.log('new_branch: ',new_branch_name);
+            //console.log('new_branch: ',new_branch_name);
             let new_branch = document.createElement('details');
             new_branch.id = item_r;
             new_branch.className = 'branch';
             // Костыль! Двоеточие меняется на другой разделитель
             new_branch.innerHTML = `<summary onclick="add_loaded(this, '${item_r}')">
-                                    <span>${new_branch_name}</span>&nbsp<input class="update-check"
-                                    type="checkbox" id = '${item_r}'>
-                                    <button onclick="get_branch('${item_r}')" type="submit"
-                                    class="btn btn-success btn-sm btn-update">
-                                    <i class="bi bi-arrow-clockwise"></i></button>
+                                        <div class="row">
+                                            <div class="col-md-3 align-self-start">
+                                                <span>${new_branch_name}</span>
+                                                <input class="update-check"
+                                                type="checkbox" id = '${item_r}'>
+                                                <button onclick="get_branch('${item_r}')" type="submit"
+                                                class="btn btn-success btn-sm btn-update">
+                                                <i class="bi bi-arrow-clockwise"></i></button>
+                                            </div>
+                                            <div class="col-md-2 dropend">
+                                                <button class="btn btn-success btn-sm dropdown-toggle" type="button" 
+                                                id="dropdownMenuButton1" data-bs-toggle="dropdown" 
+                                                aria-expanded="false">
+                                                    <i class="bi bi-graph-up"></i>
+                                                </button>
+                                                <ul class="dropdown-menu  dropdown-menu-dark" 
+                                                aria-labelledby="dropdownMenuButton1">
+                                                    <li><a class="dropdown-item" href="#" 
+                                                    onclick="visualize_branch(this)">
+                                                        График
+                                                    </a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
                                     </summary>`
 
             // Костыль! Двоеточие меняется на другой разделитель
@@ -78,7 +97,7 @@ function parse_branch(branch = {}){
 
             let new_key_name = item_r.split(new_key_split);
             new_key_name = new_key_name[new_key_name.length-1];
-            console.log('new_key: ', new_key_name);
+            //console.log('new_key: ', new_key_name);
 
             let new_key = document.createElement('p');
             new_key.id = item_r;
@@ -125,7 +144,7 @@ function get_value(key){
         // Костыль! Двоеточие меняется на другой разделитель
         data: {'key': key.replace(new RegExp(new_key_split, 'g'), key_split)},
         success : function (data){
-            console.log(`get ${key}: ${JSON.stringify(data)}`);
+            //console.log(`get ${key}: ${JSON.stringify(data)}`);
             let value_type = data['value_type'];
             let value = data['value']
 
@@ -138,7 +157,7 @@ function get_value(key){
             if (value_type === 'string'){
                 let str = $('<span>',{
                         class : 'value-string',
-                        text: data['value']
+                        text: value
                 })
                 $('.value-body').append(str)
             }
@@ -302,7 +321,7 @@ function save_value(){
         })
         value = new_dict
     }
-    console.log(`set ${key}: ${value}`)
+    //console.log(`set ${key}: ${value}`)
     //Записать новое значение в redis
     $.post({
             url : '/api/redis/set',
@@ -312,7 +331,7 @@ function save_value(){
                     'value' : JSON.stringify(value)},
             success : function (data){
                 $(".btn-save").prop('disabled', true);
-                console.log(data);
+                //console.log(data);
                 get_value(key);
             },
             error : function (xhr) {
@@ -327,13 +346,66 @@ function db_change(){
             dataType: 'json',
             data : {'db' : $(".db-selector").val()},
             success : function (data){
-                console.log(data);
+                //console.log(data);
                 $('#main-branch.branch').html('');
                 get_branch();
             },
             error : function (xhr) {
                 alert(xhr.responseJSON['message']);
             }
+    })
+}
+
+
+//Визуализация ветки в виде графика
+function visualize_branch(branch){
+    let labels = [];
+    let values = [];
+
+    $(branch).parents('details').first().children('p').each(function (){
+        let str_to_stamp = parseInt($(this).text())
+        let key = $(this).attr('id')
+        if (str_to_stamp){
+            let date = new Date(str_to_stamp)
+
+            $.get({
+                url: "/api/redis/get",
+                // Костыль! Двоеточие меняется на другой разделитель
+                data: {'key': key.replace(new RegExp(new_key_split, 'g'), key_split)},
+                success: function (data) {
+                    //console.log(`get ${key}: ${JSON.stringify(data)}`);
+                    if (data['value_type'] === 'string'){
+                        let str_to_value = parseInt(data['value'])
+                        if (str_to_value){
+                            labels.push(date.getHours()+
+                                      ":"+date.getMinutes()+
+                                      ":"+date.getSeconds()+
+                                      ":"+date.getMilliseconds());
+                            values.push(str_to_value);
+                        }
+                    }
+                }
+            })
+        }
+    })
+    console.log(labels, values)
+    const data = {
+    labels: labels,
+    datasets: [
+        {
+            name: "Some Data", chartType: "line",
+            values: [1, 2, 3]
+        }
+    ]
+    }
+
+    const chart = new frappe.Chart("#chart1", {  // or a DOM element,
+                                                // new Chart() in case of ES6 module with above usage
+        title: "Graph",
+        data: data,
+        height : 500,
+        type: 'axis-mixed', // or 'bar', 'line', 'scatter', 'pie', 'percentage'
+        colors: ['#7cd6fd']
     })
 }
 
